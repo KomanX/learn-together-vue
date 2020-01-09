@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Bubble Sort</title>
+		<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+	</head>
+	<body>
+		<div id="main">
+			<div class="dest-array-input-label">
+				<label>
+					请输入需要排序的数组：
+					<input type="text" class="dest-array-input" v-model="destArrayStr" placeholder="输入格式：18,7,3,10,12,9" />
+				</label>
+			</div>
+			<hr />
+			<div class="number-list">
+				<div class="number-box" v-for="(number,index) in destArray" v-bind:key="index" v-bind:class="{
+						currentNumber: index == cursorIndex,
+						nextNumber: index == (cursorIndex + 1)
+					}">
+					{{number}}
+				</div>
+			</div>
+			<div class="tips-box">
+				{{tips}}<span v-if="destArray.length == 0">请输入正确的数组！</span>
+			</div>
+			<hr />
+			<div class="button-list">
+				<button v-on:click="compare()" v-bind:disabled="isCompareDisabled">Compare</button>
+				<button v-on:click="goToNext()" v-bind:disabled="isGoToNextDisabled">GoToNext</button>
+				<button v-on:click="runRound()" v-bind:disabled="isRunRoundDisabled">RunRound</button>
+				<button v-on:click="goToNextRound()" v-bind:disabled="isGoToNextRoundDisabled">GoToNextRound</button>
+				<button v-on:click="runBubbleSort()" v-bind:disabled="isRunBubbleSortDisabled">RunBubbleSort</button>
+				<button v-on:click="back()" v-bind:disabled="isBackDisabled">Back</button>
+				<button v-on:click="restart()" v-bind:disabled="isRestartDisabled">Restart</button>
+			</div>
+		</div>
+	</body>
+</html>
+<script type="text/javascript">
+	var vm = new Vue({
+		el: '#main',
+		data: {
+			cursorIndex: 0,
+			currentRound: 1,
+			tips: "",
+			setTimerRound: NaN,
+			setTimerBubbleSort: NaN,
+			history: [],
+			destArrayStr: "18,7,3,10,12,9",
+			destArray: [18, 7, 3, 10, 12, 9],
+			state: 0,
+			/**
+			 * state数值介绍：
+			 * 0 - 初始状态
+			 * 1 - compare点击之后
+			 * 2 - compare完成之后
+			 * 3 - gotoNext点击之后
+			 * 4 - gotoNext完成之后
+			 * 5 - RunRound点击之后
+			 * 6 - RunRound完成之后/一轮计算结束
+			 * 7 - GoToNextRound点击之后
+			 * 8 - GoToNextRound完成之后
+			 * 9 - RunBubbleSort点击之后
+			 * 10 - RunBubbleSort完成之后/排序结束
+			 */
+			preState: 0,
+		},
+		computed: {
+			isAuto: function() {
+				return this.state == 5 || this.state == 9;
+			},
+			isBackDisabled: function() {
+				return this.state == 5 || this.state == 9 || this.state == 0 ? true : false;
+			},
+			isRestartDisabled: function() {
+				return this.state == 5 || this.state == 9 || this.state == 0 ? true : false;
+			},
+			isCompareDisabled: function() {
+				return this.state == 0 || this.state == 4 || this.state == 8 ? false : true;
+			},
+			isGoToNextDisabled: function() {
+				return this.state == 2 ? false : true;
+			},
+			isRunRoundDisabled: function() {
+				return this.state == 5 || this.state == 9 || this.state == 6 || this.state == 7 || this.state == 10 ?
+					true : false;
+			},
+			isGoToNextRoundDisabled: function() {
+				return this.state == 6 ? false : true;
+			},
+			isRunBubbleSortDisabled: function() {
+				return this.state == 5 || this.state == 9 ? true : false;
+			},
+		},
+		watch: {
+			destArrayStr: function(newDestArrayStr) {
+				/**
+				 * 当destArrayStr改动时，我们需要让data中除了destArrayStr外的数据恢复初始状态。
+				 * 使用restart()恢复初始状态，因为restart()不改变destArrayStr，所以还需要对destArrayStr赋予新值。
+				 * 处在初始状态时，不用做操作。
+				 */
+				if (this.state != 0) {
+					this.restart();
+					this.destArrayStr = newDestArrayStr;
+				};
+				/**
+				 * 我们希望用户输入的数组内容格式："111,2,3333,44" 或者 "111,2,3333,44," 相应的正则表达式为/^(\d+,)*\d+,?$/，
+				 * 而且要将字符串末尾的,号去掉再转化成字符串数组，最后再将字符串数组转化成数字数组。
+				 * 若用户输入的数组字符串通不过检测，则返回空数组，HTML中根据空数组做相应的渲染。
+				 */
+				this.destArray = /^(\d+,)*\d+,?$/.test(this.destArrayStr) ?
+					this.destArrayStr.replace(/,$/, "").split(",").map(
+						Number) : [];
+			}
+		},
+		methods: {
+			compare: function() { // 比较游标i与i+1在数组所指向的数，若前者大于后者，交换两个数的位置。
+				//compare点击之后，记录数据到history，并修改状态
+				this.recordHistory();
+				this.preState = 1;
+				!this.isAuto && this.setState(1); //若处在自动操作过程，不改变state
+				//控制换位操作&设置提示语
+				if (this.destArray[this.cursorIndex] > this.destArray[this.cursorIndex + 1]) {
+					let buf = this.destArray[this.cursorIndex];
+					this.destArray[this.cursorIndex] = this.destArray[this.cursorIndex + 1];
+					this.destArray[this.cursorIndex + 1] = buf;
+					//提示语
+					if (this.currentRound == this.destArray.length - 1) { //未确定数的数量等于2
+						//排序结束，修改状态
+						this.tips =
+							`
+							${this.destArray[this.cursorIndex]}和${this.destArray[this.cursorIndex+1]}换位,
+							冒泡排序结束
+						`;
+						this.state = 10;
+					} else if (this.cursorIndex == this.destArray.length - this.currentRound - 1) { //游标到了倒数第二个数
+						//一轮计算结束，修改状态
+						this.tips =
+							`
+							${this.destArray[this.cursorIndex]}和${this.destArray[this.cursorIndex+1]}换位,
+							第${this.currentRound}轮找最大值结束
+						`;
+						this.preState=6;
+						this.state != 9 && this.setState(6); //若不处在runBubbleSort过程，改变state
+					} else { //compare完成，修改状态
+						this.tips = `
+							${this.destArray[this.cursorIndex]}和${this.destArray[this.cursorIndex+1]}换位
+						`;
+						this.preState = 2;
+						!this.isAuto && this.setState(2); //若处在自动操作过程，不改变state
+					}
+				} else {
+					//提示语
+					if (this.currentRound == this.destArray.length - 1) { //未确定数的数量等于2
+						//排序结束，修改状态
+						this.tips = `
+							冒泡排序结束
+						`;
+						this.state = 10;
+					} else if (this.cursorIndex == this.destArray.length - this.currentRound - 1) { //游标到了倒数第二个数
+						//一轮计算结束，修改状态
+						this.tips = `
+							无需换位，第${this.currentRound}轮找最大值结束
+						`;
+						this.preState=6;
+						this.state != 9 && this.setState(6); //若不处在runBubbleSort过程，改变state
+					} else { //compare完成，修改状态
+						this.tips = `
+							无需换位
+						`;
+						this.preState = 2;
+						!this.isAuto && this.setState(2); //若处在自动操作过程，不改变state
+					}
+				}
+			},
+			goToNext: function() { // 游标i往后移一位。
+				//goToNext点击之后，记录数据到history，并修改状态
+				this.recordHistory();
+				this.preState = 3;
+				!this.isAuto && this.setState(3); //若处在自动操作过程，不改变state
+				if (this.cursorIndex < this.destArray.length - this.currentRound - 1) { //游标还未到倒数第二个数
+					this.cursorIndex++;
+					//提示语
+					this.tips = `
+						游标后移一位
+					`;
+				}
+				//goToNext完成之后，修改状态
+				this.preState = 4;
+				!this.isAuto && this.setState(4); //若处在自动操作过程，不改变state
+			},
+			runRound: function(cb) { // 每一轮的操作，也就是：不断循环操作1与操作2，直到比较完整个数组。
+				//runRound点击之后，修改状态
+				!this.isAuto && this.setState(5); //若处在自动操作过程，不改变state
+				if (this.cursorIndex < this.destArray.length - this.currentRound - 1) { //游标还未到倒数第二个数
+					if(this.preState != 2){
+						this.compare();
+						this.setTimerRound = setTimeout(() => {
+							this.goToNext();
+							this.setTimerRound = setTimeout(() => {
+								this.runRound(cb);
+							}, 1000);
+						}, 1000);
+					}else{
+						this.goToNext();
+						this.setTimerRound = setTimeout(() => {
+							this.runRound(cb);
+						}, 1000);
+					}
+					
+				}
+				if (this.cursorIndex == this.destArray.length - this.currentRound - 1) { //游标到了倒数第二个数
+					this.compare();
+					//runRound已完成。处在runBubbleSort过程中，触发回调函数；未处于runBubbleSort状态，修改状态
+					cb && cb();
+				}
+			},
+			goToNextRound: function(cb) { // 开始新的一轮。
+				//goToNextRound点击之后，记录数据到history，并修改状态
+				this.recordHistory();
+				this.preState = 7;
+				this.state != 9 && this.setState(7); //若不处在runBubbleSort过程，改变state
+				if (this.currentRound < this.destArray.length - 1) { //未确定数的数量大于2
+					//重置状态，以备新一轮的操作
+					this.cursorIndex = 0;
+					//增加当前轮数
+					this.currentRound++;
+					//提示语
+					this.tips = `
+						开始第${this.currentRound}轮找最大值
+					`;
+				};
+				this.preState = 8;
+				this.state != 9 && this.setState(8); //若不处在runBubbleSort过程，改变state
+			},
+			runBubbleSort: function() { // 整个冒泡排序的操作，也就是不断循环操作3、操作4，直到剩下的数只有一个。
+				this.state = 9; //runBubbleSort点击之后，修改状态
+				if (this.currentRound < this.destArray.length - 1) { //未确定数的数量大于2
+					if (this.preState != 6) {
+						this.runRound(() => {
+							this.setTimerBubbleSort = setTimeout(() => {
+								this.goToNextRound();
+								this.setTimerBubbleSort = setTimeout(() => {
+									this.runBubbleSort();
+								}, 1000);
+							}, 1000);
+						});
+					} else {
+						this.goToNextRound();
+						this.setTimerBubbleSort = setTimeout(() => {
+							this.runBubbleSort();
+						}, 1000);
+					}
+				}
+				if (this.currentRound == this.destArray.length - 1) { //未确定数的数量等于2
+					this.compare(); //进行最后两个数的比较计算
+				}
+			},
+			recordHistory: function() { //记录当前data数据到history数组中
+				this.history.push({
+					cursorIndex: this.cursorIndex,
+					currentRound: this.currentRound,
+					tips: this.tips,
+					setTimerRound: this.setTimerRound,
+					setTimerBubbleSort: this.setTimerBubbleSort,
+					destArray: this.destArray.concat([]),
+					state: this.preState
+				});
+			},
+			back: function() { //返回上一步
+				let preStatus = this.history.pop();
+				for (let item in preStatus) {
+					if (item instanceof Array) {
+						this[item] = preStatus[item].concat([]);
+					} else {
+						this[item] = preStatus[item];
+					}
+				}
+			},
+			restart: function() { //重置
+				if (this.history.length != 0) {
+					let preStatus = this.history[0];
+					for (let item in preStatus) {
+						if (item instanceof Array) {
+							this[item] = preStatus[item].concat([]);
+						} else {
+							this[item] = preStatus[item];
+						}
+					}
+					this.history = [];
+				}
+
+			},
+			setState: function(newValue) { //修改state数据
+				this.state = newValue;
+			},
+		}
+	});
+</script>
+<style type="text/css">
+	.number-list {
+		height: 100px;
+		width: 100%;
+		display: flex;
+		justify-content: center;
+		align-items: flex-end;
+	}
+
+	.number-box {
+		width: 50px;
+		height: 50px;
+		line-height: 50px;
+		text-align: center;
+		border: 1px solid #f8e4a7;
+		border-right: none;
+		position: relative;
+	}
+
+	.number-box:last-child {
+		border-right: 1px solid #f8e4a7;
+	}
+
+	.currentNumber:after {
+		content: "i";
+		position: absolute;
+		height: 100%;
+		width: 100%;
+		bottom: 100%;
+		right: 50%;
+		transform: translate(50%, 0);
+	}
+
+	.nextNumber:after {
+		content: "i+1";
+		position: absolute;
+		height: 100%;
+		width: 100%;
+		bottom: 100%;
+		right: 50%;
+		transform: translate(50%, 0);
+	}
+
+	.tips-box {
+		width: 100%;
+		height: 50px;
+		line-height: 50px;
+		text-align: center;
+	}
+
+	.button-list {
+		display: flex;
+		justify-content: center;
+		flex-wrap: wrap;
+	}
+
+	.button-list>button {
+		margin: 10px 5px;
+		padding: 5px 20px;
+		height: 40px;
+		line-height: 20px;
+		background-color: transparent;
+		border: 1px solid #f8e4a7;
+		border-radius: 5px;
+	}
+
+	.dest-array-input-label {
+		display: flex;
+		justify-content: center;
+	}
+
+	.dest-array-input {
+		border: 1px solid #f8e4a7;
+		padding: 5px 10px;
+	}
+</style>
