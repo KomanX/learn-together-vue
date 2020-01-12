@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>slots</title>
+		<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+	</head>
+	<body>
+		<h1>Slots</h1>
+		<div id="slot-test">
+			<box v-slot:header>header</box>
+			<box>main</box>
+			<box v-slot:footer>footer</box>
+			<box v-slot:myname="{myname}">
+				{{myname}}
+			</box>
+			<box v-slot:myname="childData">
+				{{childData.myname}}
+			</box>
+		</div>
+	</body>
+</html>
+
+<script type="text/jscript">
+	Vue.component('box', {
+		data() {
+			return {
+				myname: {
+					f: 'n',
+					l: 'cx'
+				}
+			}
+		},
+		template: `
+			<div class="container">
+			  <header>
+			    <slot name="header"></slot>
+			  </header>
+			  <main>
+			    <slot></slot>
+			  </main>
+			  <footer>
+			    <slot name="footer"></slot>
+			  </footer>
+			  <div>
+				<slot name="myname" v-bind:myname="myname">
+				</slot>
+			  </div>
+			</div>
+			
+		`
+	});
+	var vm = new Vue({
+		el: '#slot-test',
+		
+
+	});
+</script>
+
+<style type="text/css">
+
+</style>

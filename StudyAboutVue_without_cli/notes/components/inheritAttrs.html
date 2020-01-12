@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>inheritAttrs</title>
+		<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+	</head>
+	<body>
+		<div id="attrs">
+			<base-input v-model='value' name="ncx" edg="18"></base-input>
+		</div>
+	</body>
+</html>
+
+
+<script type="text/javascript">
+	Vue.component('base-input', {
+	  inheritAttrs: false,
+	  props: ['label', 'value'],
+	  template: `
+	    <label>
+	      {{ value }}
+	      <input
+	        v-bind:value="value"
+	        v-on:input="$emit('input', $event.target.value)"
+	      >
+		  <h4>$attrs内容：{{$attrs}}</h4>
+		  <h4>可以在input中添加v-bind:$attrs,让input标签继承所有根元素特性</h4>
+		  <h4>也可以从$attrs中选择指定特性继承</h4>
+		  <h4>如果inheritAttrs不设置为false，根元素的特性会继承到label标签上</h4>
+	    </label>
+	  `
+	});
+	
+	var vm = new Vue({
+		el:"#attrs",
+		data:{
+			value:"input"
+		}
+	})
+</script>
+
+<style type="text/css">
+	
+</style>

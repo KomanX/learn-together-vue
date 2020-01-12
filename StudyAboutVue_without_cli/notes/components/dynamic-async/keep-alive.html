@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>keep-alive</title>
+		<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+	</head>
+	<body>
+		<h2>keep-alive test</h2>
+		
+		<div id="main">
+			<button 
+				v-for="module in moduleList" 
+				@click="changeModule(module)"
+			>
+			{{module}}
+			</button>
+			<component :is="currentModuleComponent"></component>
+		</div>
+	</body>
+</html>
+
+<script type="text/javascript">
+	Vue.component('moduleNote',{
+		template:`
+			<div>
+				<h5>注意：</h5>
+				<h5>
+					当is绑定的组件改变时，会销毁不活动的组件实例（旧组件），<br/>
+					重新渲染一个新组件.<br/>
+					而添加了keep-alive后，旧组件会被缓存。
+				</h5>
+				<h5>
+					keep-alive主要用于保留组件状态或避免重新渲染。<br/>
+					里面存放的如果不是Vue组件而是html原生标签的话，将不会产生效果。
+				</h5>
+				<h5>
+					当使用if-else时，就算有多个条件性子元素，<br/>
+					keep-alive要求同时只有一个子元素被渲染。
+				</h5>
+			</div>
+		`
+	});
+	
+	Vue.component('moduleBaseInput',{
+		template:`
+			<div>
+				<slot></slot><input>
+			</div>
+		`
+	});
+	Vue.component('moduleBase', {
+		data:function(){
+			return{
+				currentStat:"module-base-input",
+			}
+		},
+		methods:{
+			start:function(){
+				let buf = this.currentStat;
+				this.currentStat = "";
+				setTimeout(()=>{
+					this.currentStat = buf;
+				},100)
+			}
+		},
+		template:`
+		<div>
+			<h5>
+				测试方法：在input中输入内容，点击start后，查看input的对比.
+			</h5>
+			<h5>
+				测试结果：keep-alive能支持对组件状态进行保留。
+			</h5>
+			<keep-alive>
+				<component :is="currentStat">使用了keep-alive：</component>
+			</keep-alive>
+			<component :is="currentStat">未使用keep-alive：</component>
+			<button class="btn-start" @click="start">start</button>
+		</div>
+		`,
+	});
+	
+	
+	Vue.component('moduleIfElseInput',{
+		template:`
+			<div>
+				<slot></slot>
+				<input>
+			</div>
+		`
+	});
+	Vue.component('moduleIfElseNone',{
+		template:`
+			<div>
+				<slot></slot>
+			</div>
+		`
+	});
+	Vue.component('moduleIfElse',{
+		data:function(){
+			return {
+				isInput:true
+			}
+		},
+		methods:{
+			start:function(){
+				this.isInput=!this.isInput;
+			}
+		},
+		template:`
+			<div>
+				<h5>
+					测试方法：在input中输入内容，点击start，实现v-if控制内容切换，<br/>
+					然后再点击start一次后，查看input的对比。
+				</h5>
+				<h5>
+					测试结果：keep-alive能支持<br/>
+					在v-if-else内容切换时，对组件状态进行保留。
+				</h5>
+				使用了keep-alive:
+				<keep-alive>
+					<moduleIfElseInput v-if = "isInput">
+						before
+					</moduleIfElseInput>
+					<moduleIfElseNone v-else>
+						after
+					</moduleIfElseNone>
+				</keep-alive>
+				
+				未使用keep-alive:
+				<moduleIfElseInput v-if = "isInput">
+					before
+				</moduleIfElseInput>
+				<moduleIfElseNone v-else>
+					after
+				</moduleIfElseNone>
+				<button class="btn-start" @click="start">start</button>
+			</div>
+		`
+	});
+	
+	
+	Vue.component('moduleFor',{
+		template:`
+			 <h5>
+				是用在其一个直属的子组件被开关的情形。<br/>
+				v-for不存在开关机制，所以不会工作。
+			 </h5>
+		`,
+	});
+	
+	Vue.component('moduleTransitionBox1',{
+		template:`
+			<div class="moduleTransitionBox1">
+				<input></input>
+			</div>
+		`
+	});
+	Vue.component('moduleTransitionBox2',{
+		template:`
+			<div class="moduleTransitionBox2"></div>
+		`
+	});
+	Vue.component('moduleTransition',{
+		data:function(){
+			return {
+				currentModuleTransitionBox:"moduleTransitionBox1"
+			}
+		},
+		methods:{
+			changeModuleTransitionBox:function(){
+				this.currentModuleTransitionBox = this.currentModuleTransitionBox=="moduleTransitionBox1"?"moduleTransitionBox2":"moduleTransitionBox1";
+			}
+		},
+		template:`
+			<div>
+				<h5>
+					测试方法：在input中输入内容，多次点击start，会开始内容的切换，观察动画以及input的变化<br/>
+				</h5>
+				<h5>
+					测试结果：动画会一直播放，而input的值会被缓存
+				</h5>
+				使用了keep-alive：
+				<div class="moduleTransitionDiv">
+					<transition name="moduleTransition">
+						<keep-alive>
+							<component :is="currentModuleTransitionBox"></component>
+						</keep-alive>
+					</transition>
+				</div>
+				未使用keep-alive：
+				<div class="moduleTransitionDiv">
+					<transition name="moduleTransition">
+						<component :is="currentModuleTransitionBox"></component>
+					</transition>
+				</div>
+				<button @click="changeModuleTransitionBox">start</button>
+			</div>
+		`,
+	});
+	
+	Vue.component('modulePropsInput1',{
+		
+		template:`
+			<div>
+				modulePropsInput1 :
+				<input>
+			</div>
+		`
+	});
+	Vue.component('modulePropsInput2',{
+		
+		template:`
+			<div>
+				modulePropsInput2 :
+				<input>
+			</div>
+		`
+	});
+	Vue.component('modulePropsInput3',{
+		
+		template:`
+			<div>
+				modulePropsInput3 :
+				<input>
+			</div>
+		`
+	});
+	Vue.component('moduleProps',{
+		data:function(){
+			return {
+				inputList:[
+					'modulePropsInput1',
+					'modulePropsInput2',
+					'modulePropsInput3'
+				],
+				inputValueList:[
+					{name:'input1',value:""},
+					{name:'input2',value:""},
+					{name:'input3',value:""},
+				],
+				myProps:{
+					include:"",
+					exclude:"",
+					max:"1"
+				},
+				currentInputIndex:0,
+			}
+		},
+		computed:{
+			currentInput:function(){
+				return this.inputList[this.currentInputIndex]
+			},
+		},
+		methods:{
+			start:function(){
+				this.currentInputIndex=(this.currentInputIndex+1)%3;
+			},
+			jump:function(){
+				this.currentInputIndex=(this.currentInputIndex+2)%3;
+			}
+		},
+		template:`
+		<div>
+			<h5>
+				include 和 exclude 属性允许组件有条件地缓存。<br/>
+				二者都可以用逗号分隔字符串、正则表达式或一个数组来表示<br/>
+				匹配首先检查组件自身的 name 选项，如果 name 选项不可用，<br/>
+				则匹配它的局部注册名称 (父组件 components 选项的键值)。<br/>
+				匿名组件不能被匹配。
+			</h5>
+			<h5>
+				include - 字符串或正则表达式。只有名称匹配的组件会被缓存。<br/>
+				exclude - 字符串或正则表达式。任何名称匹配的组件都不会被缓存。<br/>
+				max - 数字。最多可以缓存多少组件实例。
+			</h5>
+			<h5>
+				测试方法：设置好三种参数，再在modulePropsInput中输入内容，<br/>
+				点击start，可以依次切换三个input，查看哪些input内容被保存了。<br/>
+				点击jump，以跳过一个的方式来切换input，测试max参数时需要使用。
+			</h5>
+			<h5>
+				测试结果：exclude优先于include。<br/>
+				max参数控制效果，会在新实例被创建之前，将已缓存组件中最久没有被访问的实例销毁。
+				所以用start依次查看input时会发现，看不到input中有缓存内容。
+				因为比如max为2时，当input3实例被创建时，input1缓存就被删除了，所以从3跳到1时，就看不到input1中内容。
+				用jump方法，直接从2跳到1，才能看到input1中缓存内容。
+			</h5>
+			
+			<keep-alive :include="myProps.include" :exclude="myProps.exclude" :max="myProps.max">
+				<component 
+					:is="currentInput" 
+				></component>
+			</keep-alive>
+			<div>
+				include参数：<input v-model="myProps.include">
+			</div>
+			<div>
+				exclude参数：<input v-model="myProps.exclude">
+			</div>
+			<div>
+				max参数：<input v-model="myProps.max">
+			</div>
+			
+			<button 
+				@click="start"
+			>
+				start
+			</button>
+			<button 
+				@click="jump"
+			>
+				jump
+			</button>
+		</div>
+		`,
+	});
+	
+	
+	
+	var vm = new Vue({
+		el: "#main",
+		data: {
+			currentModule: "note",
+			moduleList: [
+				'note',
+				'base',
+				'if-else',
+				'for',
+				'transition',
+				'props',
+			],
+		},
+		methods: {
+			changeModule: function(newModule) {
+				this.currentModule = newModule;
+			},
+		},
+		computed:{
+			currentModuleComponent:function(){
+				return 'module-' + this.currentModule.toLowerCase()
+			}
+		}
+	});
+
+	
+</script>
+
+
+<style type="text/css">
+	.btn-start{
+		width: 100px;
+		line-height: 20px;
+		margin: 10px 0;
+	}
+	.moduleTransitionDiv{
+		position:relative;
+		width: 200px;
+		height: 50px;
+		margin: 20px 0 ;
+	}
+	
+	.moduleTransitionBox1{
+		position: absolute;
+		width: 100%;
+		height: 100%;
+		background-color: red;
+	}
+	
+	.moduleTransitionBox2{
+		position: absolute;
+		width: 100%;
+		height: 100%;
+		background-color: blue;
+	}
+	
+	.moduleTransition-enter-active, .moduleTransition-leave-active {
+	  transition: width .5s;
+	}
+	
+	.moduleTransition-enter, .moduleTransition-leave-to {
+	  width: 300px;
+	}
+</style>	

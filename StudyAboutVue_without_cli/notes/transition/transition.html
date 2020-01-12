@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>transition</title>
+		<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+		
+	</head>
+	<body>
+		<div id="main">
+			<h1>过渡 & 动画 相关测试</h1>
+			<button v-for="mytest in myTestList" @click="currentTest=mytest+'-test'">{{mytest}}</button>
+			<component :is="currentTest"></component>
+		</div>
+	</body>
+</html>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/velocity/1.2.3/velocity.min.js"></script>
+<script type="text/javascript">
+	// transition
+	Vue.component('TransitionTest',{
+		data:function(){
+			return {
+				isTransitionBox:true,
+			}
+		},
+		template:`
+		<div>
+			<h3>transition:</h3>
+			<button @click="isTransitionBox = !isTransitionBox">start</button>
+			<transition name="transition-fade">
+				<div class="show-box" v-show="isTransitionBox"></div>
+			</transition>
+		</div>
+		`
+	});
+	
+	// animation
+	Vue.component('AnimationTest',{
+		data:function(){
+			return {
+				isAnimationBox:true,
+			}
+		},
+		template:`
+		<div>
+			<h3>@keyframes & animation:</h3>
+			<button @click="isAnimationBox = !isAnimationBox">start</button>
+			<transition name="animation-fade">
+				<div class="show-box" v-show="isAnimationBox"></div>
+			</transition>
+		</div>
+		`
+	});
+	
+	// animate
+	Vue.component('AnimateTest',{
+		data:function(){
+			return {
+				isAnimateBox:true,
+			}
+		},
+		template:`
+		<div>
+			<h3>animate.css</h3>
+			<link href="https://cdn.jsdelivr.net/npm/animate.css@3.5.1" rel="stylesheet" type="text/css">
+			<button @click="isAnimateBox = !isAnimateBox">start</button>
+			<transition 
+				name="animate-bounceOutRight"
+				enter-active-class="animated tada"
+				leave-active-class="animated bounceOutRight"
+			>
+				<div class="show-box" v-show="isAnimateBox"></div>
+			</transition>
+		</div>
+		`
+	});
+	
+	// velocity
+	Vue.component('VelocityTest',{
+		data:function(){
+			return {
+				isVelocityBox:true,
+			}
+		},
+		template:`
+		<div>
+			<h3>JS钩子 & Velocity.js</h3>
+			<h5>
+				这里必须要用v-if，v-show只是把display变成none，v-if会销毁DOM。<br/>
+				纯粹的JS动画，只是用v-show的话，无法正确恢复初始状态。<br/>
+				下面例子也会发现，如果div一开始就是存在的，beforeEnter函数并不会被触发。<br/>
+				所以最好在需要动画效果来回重复时，使用v-if而不是v-show。
+			</h5>
+			<h5>
+				关于：当只用 JavaScript 过渡的时候，enter和leave中必须使用done进行回调，否则，它们将被同步调用，过渡会立即完成。<br/>
+				还没测试出区别。
+			</h5>
+			<button @click="isVelocityBox = !isVelocityBox">start</button>
+			<transition 
+				name="velocity-test"
+				@before-enter="beforeEnter"
+				@enter="enter"
+				@leave="leave"
+				:css="false"
+			>
+				<div class="show-box" v-if="isVelocityBox">123</div>
+			</transition>
+		</div>
+		`,
+		methods: {
+		    beforeEnter: function (el) {
+		      el.style.opacity = 0
+		      el.style.transformOrigin = 'left'
+		    },
+		    enter: function (el, done) {
+		      Velocity(el, { opacity: 1, fontSize: '1.4em' }, { duration: 3000 })
+		      Velocity(el, { fontSize: '1em' }, { complete: done })
+		    },
+		    leave: function (el, done) {
+		      Velocity(el, { translateX: '15px', rotateZ: '50deg' }, { duration: 3000 })
+		      Velocity(el, { rotateZ: '100deg' }, { loop: 2 })
+		      Velocity(el, {
+		        rotateZ: '45deg',
+		        translateY: '30px',
+		        translateX: '30px',
+		        opacity: 0
+		      }, { complete: done })
+		    }
+		  }
+	});
+	
+	// appear
+	Vue.component('AppearTestJs',{
+		data:function(){
+			return {
+				isAppearJsBox:true
+			}
+		},
+		template:`
+			<div>
+				<h5>JS方式设置动画:</h5>
+				<h5>
+					给transition设置了appear特性后，<br/>
+					初始化渲染会根据@appear等appear相关事件进行，<br/>
+					如果没有设置appear相关事件，就会按enter相关事件来进行
+				</h5>
+				<link href="https://cdn.jsdelivr.net/npm/animate.css@3.5.1" rel="stylesheet" type="text/css">
+				<button @click="isAppearJsBox = !isAppearJsBox">start</button>
+				<transition 
+					appear
+					@before-appear="beforeAppear"
+					@appear="appear"
+					@before-enter="beforeEnter"
+					@enter="enter"
+					@leave="leave"
+					:css="false"
+				>
+					<div class="show-box" v-if="isAppearJsBox">123</div>
+				</transition>
+			</div>
+		`,
+		methods: {
+		    beforeEnter: function (el) {
+		      el.style.opacity = 0
+		      el.style.transformOrigin = 'left'
+		    },
+		    enter: function (el, done) {
+		      Velocity(el, { opacity: 1, fontSize: '1.4em' }, { duration: 1000 })
+		      Velocity(el, { fontSize: '1em' }, { complete: done })
+		    },
+		    leave: function (el, done) {
+		      Velocity(el, { translateX: '15px', rotateZ: '50deg' }, { duration: 1000 })
+		      Velocity(el, { rotateZ: '100deg' }, { loop: 2 })
+		      Velocity(el, {
+		        rotateZ: '45deg',
+		        translateY: '30px',
+		        translateX: '30px',
+		        opacity: 0
+		      }, { complete: done })
+		    },
+			beforeAppear: function (el) {
+			  el.style.opacity = 0
+			  el.style.transformOrigin = 'left'
+			},
+			appear: function (el, done) {
+			  Velocity(el, { translateX: '15px', opacity: 1, fontSize: '1.4em' }, { duration: 1000 })
+			  Velocity(el, { fontSize: '1em' }, { complete: done })
+			},
+		  }
+	});
+	Vue.component('AppearTestClass',{
+		data:function(){
+			return {
+				isAppearClassBox:true
+			}
+		},
+		template:`
+			<div>
+				<h5>class方式设置动画:</h5>
+				<h5>
+					给transition设置了appear特性后，<br/>
+					初始化渲染会根据appear-active-class等appear相关特性进行，<br/>
+					如果没有设置appear相关特性，就会按enter相关特性来进行
+				</h5>
+				<link href="https://cdn.jsdelivr.net/npm/animate.css@3.5.1" rel="stylesheet" type="text/css">
+				<button @click="isAppearClassBox = !isAppearClassBox">start</button>
+				<transition 
+					appear
+					appear-active-class="animated bounceInRight"
+					enter-active-class="animated tada"
+					leave-active-class="animated bounceOutRight"
+				>
+					<div class="show-box" v-if="isAppearClassBox"></div>
+				</transition>
+			</div>
+		`
+	});
+	Vue.component('AppearTestName',{
+		data:function(){
+			return {
+				isAppearNameBox:true
+			}
+		},
+		template:`
+			<div>
+				<h5>name方式设置动画:</h5>
+				<h5>
+					
+				</h5>
+				<button @click="isAppearNameBox = !isAppearNameBox">start</button>
+				<transition 
+					appear
+					name="appear-test-name"
+				>
+					<div 
+						class="show-box" 
+						v-if="isAppearNameBox"
+					></div>
+				</transition>
+			</div>
+		`
+	});
+	Vue.component('AppearTestMix',{
+		data:function(){
+			return {
+				isAppearMixBox:true
+			}
+		},
+		template:`
+			<div>
+				<h5>混合设置动画:</h5>
+				<h5>
+					设置了:css="false",<br/>
+					优先级为：<br/>
+					@appear<br/>
+					@enter<br/>
+					其他基于css的因为设置了:css="false"都不会生效。
+				</h5>
+				<h5>
+					不设置:css="false",<br/>
+					优先级为：<br/>
+					appear-active-class<br/>
+					enter-active-class<br/>
+					name与@appear组合效果<br/>
+					name与@enter组合效果
+				</h5>
+				<link href="https://cdn.jsdelivr.net/npm/animate.css@3.5.1" rel="stylesheet" type="text/css">
+				<button 
+					@click="isAppearMixBox = !isAppearMixBox"
+				>
+					start
+				</button>
+				<transition 
+					appear
+					name="appear-test-name"
+					appear-active-class="animated bounceInRight"
+					enter-active-class="animated bounceInLeft"
+					@before-appear="beforeAppear"
+					@appear="appear"
+					@before-enter="beforeEnter"
+					@enter="enter"
+					@leave="leave"
+				>
+					<div 
+						class="show-box" 
+						v-if="isAppearMixBox"
+					>
+						123
+					</div>
+				</transition>
+			</div>
+		`,
+		methods: {
+		    beforeEnter: function (el) {
+		      el.style.opacity = 0
+		      el.style.transformOrigin = 'left'
+		    },
+		    enter: function (el, done) {
+		      Velocity(el, { opacity: 1, fontSize: '1.4em' }, { duration: 1000 })
+		      Velocity(el, { fontSize: '1em' }, { complete: done })
+		    },
+		    leave: function (el, done) {
+		      Velocity(el, { translateX: '15px', rotateZ: '50deg' }, { duration: 1000 })
+		      Velocity(el, { rotateZ: '100deg' }, { loop: 2 })
+		      Velocity(el, {
+		        rotateZ: '45deg',
+		        translateY: '30px',
+		        translateX: '30px',
+		        opacity: 0
+		      }, { complete: done })
+		    },
+			beforeAppear: function (el) {
+			  el.style.opacity = 0
+			  el.style.transformOrigin = 'left'
+			},
+			appear: function (el, done) {
+			  Velocity(el, { translateX: '15px', opacity: 1, }, { duration: 1000 })
+			  Velocity(el, { translateX: '0px' }, { complete: done })
+			},
+		  }
+	});
+	Vue.component('AppearTest',{
+		data:function(){
+			return {
+				currentAppearTest:'mix',
+				appearTestList:[
+					'mix',
+					'js',
+					'class',
+					'name',
+				]
+			}
+		},
+		template:`
+		<div>
+			<h3>
+				Appear:<br/>
+				初始渲染的过渡
+			</h3>
+			<button 
+				v-for="appearTest in appearTestList" 
+				@click="currentAppearTest=appearTest"
+			>
+				{{appearTest}}
+			</button>
+			<component 
+				:is="'appear-test-' + currentAppearTest"
+			></component>
+		</div>
+		`,
+	});
+	
+	// mode
+	Vue.component('ModeTest',{
+		data:function(){
+			return {
+				isModeDefaultBox:true,
+				isModeOIBox:true,
+				isModeIOBox:true
+			}
+		},
+		template:`
+			<div>
+				<h3>
+					Mode:<br/>
+					过渡模式
+				</h3>
+				<h5>
+					transition的默认行为 - 进入和离开同时发生。<br/>
+					同时生效的进入和离开的过渡不能满足所有要求，所以 Vue 提供了 过渡模式<br/>
+					out-in：当前元素先进行过渡，完成之后新元素过渡进入。<br/>
+					in-out：新元素先进行过渡，完成之后当前元素过渡离开。<br/>
+				</h5>
+				<link href="https://cdn.jsdelivr.net/npm/animate.css@3.5.1" rel="stylesheet" type="text/css">
+				<h5>default:</h5>
+				<button @click="isModeDefaultBox = !isModeDefaultBox">start</button>
+				<transition 
+					enter-active-class="animated bounceInRight"
+					leave-active-class="animated bounceOutRight"
+				>
+					<div class="show-box" v-if="isModeDefaultBox" key="OnBoxDefault">on</div>
+					<div class="show-box" v-else key="OffBoxDefault">off</div>
+				</transition>
+				<h5>out-in:</h5>
+				<button @click="isModeOIBox = !isModeOIBox">start</button>
+				<transition 
+					enter-active-class="animated bounceInRight"
+					leave-active-class="animated bounceOutRight"
+					mode="out-in"
+				>
+					<div class="show-box" v-if="isModeOIBox" key="OnBoxOI">on</div>
+					<div class="show-box" v-else key="OffBoxOI">off</div>
+				</transition>
+				<h5>in-out:</h5>
+				<button @click="isModeIOBox = !isModeIOBox">start</button>
+				<transition 
+					enter-active-class="animated bounceInRight"
+					leave-active-class="animated bounceOutRight"
+					mode="in-out"
+				>
+					<div class="show-box" v-if="isModeIOBox" key="OnBoxIO">on</div>
+					<div class="show-box" v-else key="OffBoxIO">off</div>
+				</transition>
+			</div>
+			</div>
+		`
+	});
+	
+	// list
+	Vue.component('ListTest',{
+		data:function(){
+			return {
+				items: [1,2,3,4,5,6,7,8,9],
+				nextNum: 10,
+				query: '',
+				list: [
+					{ msg: 'Bruce Lee' },
+					{ msg: 'Jackie Chan' },
+					{ msg: 'Chuck Norris' },
+					{ msg: 'Jet Li' },
+					{ msg: 'Kung Fury' }
+				]
+			}
+		},
+		computed: {
+			computedList: function () {
+				var vm = this
+				return this.list.filter(function (item) {
+					return item.msg.toLowerCase().indexOf(vm.query.toLowerCase()) !== -1
+				})
+			}
+		},
+		methods:{
+			randomIndex: function () {
+			      return Math.floor(Math.random() * this.items.length)
+			},
+			add: function () {
+				this.items.splice(this.randomIndex(), 0, this.nextNum++)
+			},
+			remove: function () {
+				this.items.splice(this.randomIndex(), 1)
+			},
+			beforeEnter: function (el) {
+			      el.style.opacity = 0
+			      el.style.height = 0
+			    },
+			    enter: function (el, done) {
+			      var delay = el.dataset.index * 150
+			      setTimeout(function () {
+			        Velocity(
+			          el,
+			          { opacity: 1, height: '1.6em' },
+			          { complete: done }
+			        )
+			      }, delay)
+			    },
+			    leave: function (el, done) {
+			      var delay = el.dataset.index * 150
+			      setTimeout(function () {
+			        Velocity(
+			          el,
+			          { opacity: 0, height: 0 },
+			          { complete: done }
+			        )
+			      }, delay)
+			    }
+		},
+		template:`
+			<div id="list-demo" class="demo">
+				<h3>
+					List:<br/>
+					列表渲染
+				</h3>
+				<h5>
+					过渡模式不可用，因为我们不再相互切换特有的元素。<br/>
+					内部元素 总是需要 提供唯一的 key 属性值。<br/>
+					CSS 过渡的类将会应用在内部的元素中，而不是这个组/容器本身。<br/>
+				</h5>
+				
+				<button v-on:click="add">Add</button>
+				<button v-on:click="remove">Remove</button> 
+				<h4>
+					default:
+				</h4>
+				<transition-group 
+					name="list-default" 
+					tag="div"
+				>
+					<span 
+						v-for="item in items" 
+						v-bind:key="item" 
+						class="list-item"
+					>
+						{{ item }}
+					</span>
+				</transition-group>
+				<h4>
+					添加v-move特性:
+				</h4>
+				<h5>
+					v-move像之前的类名一样，可以通过 name 属性来自定义前缀，<br/>
+					也可以通过 move-class 属性手动设置。
+				</h5>
+				<transition-group 
+					name="list-move" 
+					tag="div"
+				>
+					<span 
+						v-for="item in items" 
+						v-bind:key="item" 
+						class="list-item"
+					>{{ item }}</span>
+				</transition-group>
+				<h4>
+					列表交错过渡例子：关键字查询
+				</h4>
+				<div id="staggered-list-demo">
+					<input v-model="query">
+					<transition-group
+						name="staggered-fade"
+						tag="ul"
+						v-bind:css="false"
+						v-on:before-enter="beforeEnter"
+						v-on:enter="enter"
+						v-on:leave="leave"
+					>
+						<li
+							v-for="(item, index) in computedList"
+							v-bind:key="item.msg"
+							v-bind:data-index="index"
+						>{{ item.msg }}</li>
+					</transition-group>
+				</div>
+				
+			</div>
+		`
+	});
+	
+	// reusable
+	Vue.component('ReusableTest',{
+		template:`
+			<div>
+				<h3>
+					可复用的过渡：
+				</h3>
+				<h5>
+					以transition或者transition-group标签作为根组件，结合slot<br/>
+					或者更推荐使用函数式组件来完成
+					详情见：
+				</h5>
+				<a href="https://cn.vuejs.org/v2/guide/transitions.html#%E5%8F%AF%E5%A4%8D%E7%94%A8%E7%9A%84%E8%BF%87%E6%B8%A1">Vue - 可复用的过渡</a>
+			</div>
+		`
+	});
+	
+	// dynamic
+	Vue.component('DynamicTest',{
+		template:`
+			<div>
+				<h3>
+					动态过渡：
+				</h3>
+				<h5>
+					绑定name特性或者利用JS钩子<br/>
+					详情见：
+				</h5>
+				<a href="https://cn.vuejs.org/v2/guide/transitions.html#%E5%8A%A8%E6%80%81%E8%BF%87%E6%B8%A1">Vue - 动态过渡</a>
+			</div>
+		`
+	})
+	
+	var vm=new Vue({
+		el:'#main',
+		data:{
+			currentTest:'transition-test',
+			myTestList:[
+				'transition',
+				'animation',
+				'animate',
+				'velocity',
+				'appear',
+				'mode',
+				'list',
+				'reusable',
+				'dynamic'
+			],
+		},
+		
+	});
+</script>
+
+<style type="text/css">
+	.show-box{
+		width: 6.25rem;
+		height: 3.125rem;
+		color: white;
+		background-color: black;
+	}
+	
+	/* setting with transition */
+	.transition-fade-enter-active, .transition-fade-leave-active {
+	  transition-property: opacity,width;
+	  transition-duration: .5s,3s;
+	}
+	.transition-fade-enter, .transition-fade-leave-to {
+	  opacity: 0;
+	  width:12.5rem;
+	}
+	
+	/* setting with @keyframes & animation */
+	.animation-fade-enter-active {
+		animation:animation-in 3s;
+	}
+	.animation-fade-leave-active {
+		animation:animation-in 3s reverse;
+	}
+	@keyframes animation-in{
+		0%{
+			transform: scale(0);
+			opacity: 0;
+		}
+		50%{
+			transform: scale(1.5);
+			opacity: 0.5;
+		}
+		100%{
+			transform:scale(1);
+			opacity: 1;
+		}
+	}
+	
+	/* appear-test-name */
+	.appear-test-name-enter-active, .appear-test-name-leave-active {
+	  transition-property: opacity,width;
+	  transition-duration: .5s,3s;
+	}
+	.appear-test-name-enter, .appear-test-name-leave-to {
+	  opacity: 0;
+	  width:12.5rem;
+	}
+	
+	/* list-test */
+	.list-item {
+	  display: inline-block;
+	  margin-right: 10px;
+	}
+	.list-default-enter-active, .list-default-leave-active {
+	  transition: all 1s;
+	}
+	.list-default-enter, .list-default-leave-to{
+	  opacity: 0;
+	  transform: translateY(30px);
+	}
+	.list-move-enter-active, .list-move-leave-active {
+	  transition: all 1s;
+	}
+	.list-move-enter, .list-move-leave-to{
+	  opacity: 0;
+	  transform: translateY(30px);
+	}
+	.list-move-move{
+		transition: transform 1s;
+	}
+	.list-move-leave-active {
+	  position: absolute;
+	}
+	
+</style>
