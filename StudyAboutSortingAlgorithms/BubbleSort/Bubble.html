@@ -123,9 +123,14 @@
 				!this.isAuto && this.setState(1); //若处在自动操作过程，不改变state
 				//控制换位操作&设置提示语
 				if (this.destArray[this.cursorIndex] > this.destArray[this.cursorIndex + 1]) {
-					let buf = this.destArray[this.cursorIndex];
-					this.destArray[this.cursorIndex] = this.destArray[this.cursorIndex + 1];
-					this.destArray[this.cursorIndex + 1] = buf;
+					[
+						this.destArray[this.cursorIndex],
+						this.destArray[this.cursorIndex + 1]
+					] = [
+						this.destArray[this.cursorIndex + 1],
+						this.destArray[this.cursorIndex]
+					];
+
 					//提示语
 					if (this.currentRound == this.destArray.length - 1) { //未确定数的数量等于2
 						//排序结束，修改状态
@@ -142,7 +147,7 @@
 							${this.destArray[this.cursorIndex]}和${this.destArray[this.cursorIndex+1]}换位,
 							第${this.currentRound}轮找最大值结束
 						`;
-						this.preState=6;
+						this.preState = 6;
 						this.state != 9 && this.setState(6); //若不处在runBubbleSort过程，改变state
 					} else { //compare完成，修改状态
 						this.tips = `
@@ -164,7 +169,7 @@
 						this.tips = `
 							无需换位，第${this.currentRound}轮找最大值结束
 						`;
-						this.preState=6;
+						this.preState = 6;
 						this.state != 9 && this.setState(6); //若不处在runBubbleSort过程，改变state
 					} else { //compare完成，修改状态
 						this.tips = `
@@ -195,7 +200,7 @@
 				//runRound点击之后，修改状态
 				!this.isAuto && this.setState(5); //若处在自动操作过程，不改变state
 				if (this.cursorIndex < this.destArray.length - this.currentRound - 1) { //游标还未到倒数第二个数
-					if(this.preState != 2){
+					if (this.preState != 2) {
 						this.compare();
 						this.setTimerRound = setTimeout(() => {
 							this.goToNext();
@@ -203,13 +208,13 @@
 								this.runRound(cb);
 							}, 1000);
 						}, 1000);
-					}else{
+					} else {
 						this.goToNext();
 						this.setTimerRound = setTimeout(() => {
 							this.runRound(cb);
 						}, 1000);
 					}
-					
+
 				}
 				if (this.cursorIndex == this.destArray.length - this.currentRound - 1) { //游标到了倒数第二个数
 					this.compare();

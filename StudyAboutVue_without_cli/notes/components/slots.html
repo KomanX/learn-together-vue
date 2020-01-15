@@ -8,15 +8,16 @@
 	<body>
 		<h1>Slots</h1>
 		<div id="slot-test">
-			<box v-slot:header>header</box>
-			<box>main</box>
-			<box v-slot:footer>footer</box>
-			<box v-slot:myname="{myname}">
-				{{myname}}
+			<box>
+				<template v-slot:header>header</template>
+				<template v-slot:default>main</template>
+				<template v-slot:footer>footer</template>
+				<template v-slot:myname="childData">
+					{{childData.myname}} 
+					{{childData.myage}}
+				</template>
 			</box>
-			<box v-slot:myname="childData">
-				{{childData.myname}}
-			</box>
+			
 		</div>
 	</body>
 </html>
@@ -28,7 +29,8 @@
 				myname: {
 					f: 'n',
 					l: 'cx'
-				}
+				},
+				myage:18
 			}
 		},
 		template: `
@@ -43,7 +45,7 @@
 			    <slot name="footer"></slot>
 			  </footer>
 			  <div>
-				<slot name="myname" v-bind:myname="myname">
+				<slot name="myname" v-bind:myname="myname" v-bind:myage="myage">
 				</slot>
 			  </div>
 			</div>
@@ -52,9 +54,8 @@
 	});
 	var vm = new Vue({
 		el: '#slot-test',
-		
-
 	});
+	 
 </script>
 
 <style type="text/css">
