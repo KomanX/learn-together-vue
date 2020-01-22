@@ -1,4 +1,4 @@
-# study-cli
+# vue-ui
 
 ## Project setup
 ```
